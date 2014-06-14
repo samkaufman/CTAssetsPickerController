@@ -29,26 +29,108 @@
 #import "CTAssetsGroupViewCell.h"
 
 
+static const NSUInteger kPosterViews = 3;
+static const CGSize kPosterSize = {68.5, 68.5};
+static const CGFloat kLeftPadding = 9.0f;
+static const CGFloat kLabelLeftPadding = 6.0f;
+
+static const CGFloat kPosterPeek = 1.5f;
+static const CGFloat kWhiteBorder = 0.5f;
+static const CGFloat kXShrinkIncrement = 2.0f;
+
 
 @implementation CTAssetsGroupViewCell {
     NSString *_accessibilityLabel;
+    NSArray *_posterViews;
+}
+
++ (CGFloat)neededHeight {
+    return 86.0f;
 }
 
 - (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier {
-    return [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+    self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+    if (self) {
+        
+        CGFloat topTop = 4.0f;
+        CGFloat totalIncrement = kPosterPeek + kWhiteBorder;
+        
+        NSMutableArray *posterViews = [NSMutableArray arrayWithCapacity:kPosterViews];
+        for (int i = 0; i < kPosterViews; i++) {
+            CGFloat leftIdent = (kPosterViews - i - 1) * kXShrinkIncrement;
+            CGFloat topIdent = i * totalIncrement;
+            CGFloat width = kPosterSize.width - (leftIdent * 2);
+            CGRect pivFrame = CGRectMake(kLeftPadding + leftIdent, topTop + topIdent, width, kPosterSize.height);
+            
+            UIImageView *piv = [[UIImageView alloc] initWithFrame:pivFrame];
+            piv.backgroundColor = [UIColor blackColor];
+            piv.layer.borderColor = [UIColor whiteColor].CGColor;
+            piv.layer.borderWidth = kWhiteBorder;
+            
+            [posterViews insertObject:piv atIndex:0];
+            [self.contentView addSubview:piv];
+        }
+        
+        _posterViews = posterViews;
+    }
+    return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    
+    CGFloat posterRightEdge = CGRectGetMaxX([[_posterViews firstObject] frame]);
+    CGFloat labelLeft = posterRightEdge + kLeftPadding + kLabelLeftPadding;
+    CGFloat textLabelRightEdge = self.frame.size.width - 32.0f;
+    
+    self.textLabel.frame = CGRectMake(labelLeft, self.textLabel.frame.origin.y, textLabelRightEdge - labelLeft, self.textLabel.frame.size.height);
+    self.detailTextLabel.frame = CGRectMake(labelLeft, self.detailTextLabel.frame.origin.y, textLabelRightEdge - labelLeft, self.detailTextLabel.frame.size.height);
 }
 
 - (void)bind:(ALAssetsGroup *)assetsGroup
 {
-    CGImageRef posterImage      = assetsGroup.posterImage;
-    size_t height               = CGImageGetHeight(posterImage);
-    float scale                 = height / kThumbnailLength;
+    float scale = [[UIScreen mainScreen] scale];
     
-    self.imageView.image        = [UIImage imageWithCGImage:posterImage scale:scale orientation:UIImageOrientationUp];
+    /**
+     * Fill in the first view with group's poster image.
+     */
+    UIImageView *firstPIV = _posterViews[0];
+    if (assetsGroup.posterImage) {
+        firstPIV.image = [UIImage imageWithCGImage:assetsGroup.posterImage scale:scale orientation:UIImageOrientationUp];
+    }
+    else {
+        firstPIV.image = nil;
+    }
+    
+    /**
+     * Fill in all poster views after the first, since we only have
+     * one posterImage.
+     */
+    NSUInteger posterOffset = assetsGroup.posterImage ? 1 : 0;
+    NSRange fillRange = NSMakeRange(posterOffset, MIN([_posterViews count], assetsGroup.numberOfAssets) - posterOffset);
+    [assetsGroup enumerateAssetsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:fillRange]
+                                  options:0
+                               usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+                                   if (index == NSNotFound)
+                                       return;
+                                   UIImageView *piv = _posterViews[index];
+                                   piv.image = [UIImage imageWithCGImage:result.thumbnail
+                                                                   scale:scale
+                                                             orientation:UIImageOrientationUp];
+                               }];
+    
+    // Clear the missed image views
+    for (NSUInteger i = fillRange.location + fillRange.length; i < [_posterViews count]; i++) {
+        UIImageView *piv = _posterViews[i];
+        piv.image = nil;
+    }
+    
+    // Fill the other views
     self.textLabel.text         = [assetsGroup valueForProperty:ALAssetsGroupPropertyName];
     self.detailTextLabel.text   = [NSString stringWithFormat:@"%ld", (long)assetsGroup.numberOfAssets];
     self.accessoryType          = UITableViewCellAccessoryDisclosureIndicator;
     
+    // Accessibility
     NSString *label             = [assetsGroup valueForProperty:ALAssetsGroupPropertyName];
     _accessibilityLabel         = [label stringByAppendingFormat:NSLocalizedString(@"%ld Photos", nil), (long)assetsGroup.numberOfAssets];
 }

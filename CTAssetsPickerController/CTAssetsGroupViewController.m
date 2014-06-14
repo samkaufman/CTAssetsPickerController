@@ -113,7 +113,7 @@
 
 - (void)setupViews
 {
-    self.tableView.rowHeight = kThumbnailLength + 12;
+    self.tableView.rowHeight = [CTAssetsGroupViewCell neededHeight];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
 }
 

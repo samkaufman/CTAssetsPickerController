@@ -32,6 +32,8 @@
 
 @interface CTAssetsGroupViewCell : UITableViewCell
 
++ (CGFloat)neededHeight;
+
 - (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier;
 - (void)bind:(ALAssetsGroup *)assetsGroup;
 
