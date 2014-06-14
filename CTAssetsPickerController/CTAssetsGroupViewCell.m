@@ -63,7 +63,7 @@ static const CGFloat kXShrinkIncrement = 2.0f;
             CGRect pivFrame = CGRectMake(kLeftPadding + leftIdent, topTop + topIdent, width, kPosterSize.height);
             
             UIImageView *piv = [[UIImageView alloc] initWithFrame:pivFrame];
-            piv.backgroundColor = [UIColor blackColor];
+            piv.backgroundColor = [UIColor whiteColor];
             piv.layer.borderColor = [UIColor whiteColor].CGColor;
             piv.layer.borderWidth = kWhiteBorder;
             
@@ -92,22 +92,20 @@ static const CGFloat kXShrinkIncrement = 2.0f;
     float scale = [[UIScreen mainScreen] scale];
     
     /**
-     * Fill in the first view with group's poster image.
+     * If no images are available there's a poster image, use it.
      */
-    UIImageView *firstPIV = _posterViews[0];
-    if (assetsGroup.posterImage) {
+    NSInteger posterOffset = 0;
+    if (assetsGroup.posterImage && !assetsGroup.numberOfAssets) {
+        UIImageView *firstPIV = _posterViews[0];
         firstPIV.image = [UIImage imageWithCGImage:assetsGroup.posterImage scale:scale orientation:UIImageOrientationUp];
-    }
-    else {
-        firstPIV.image = nil;
+        posterOffset = 1;
     }
     
     /**
      * Fill in all poster views after the first, since we only have
      * one posterImage.
      */
-    NSUInteger posterOffset = assetsGroup.posterImage ? 1 : 0;
-    NSRange fillRange = NSMakeRange(posterOffset, MIN([_posterViews count], assetsGroup.numberOfAssets) - posterOffset);
+    NSRange fillRange = NSMakeRange(posterOffset, MAX(0, MIN((long)[_posterViews count], (long)assetsGroup.numberOfAssets) - posterOffset));
     [assetsGroup enumerateAssetsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:fillRange]
                                   options:0
                                usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
