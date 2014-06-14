@@ -376,7 +376,7 @@
     CTAssetsGroupViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     
     if (cell == nil)
-        cell = [[CTAssetsGroupViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier];
+        cell = [[CTAssetsGroupViewCell alloc] initWithReuseIdentifier:CellIdentifier];
     
     [cell bind:[self.groups objectAtIndex:indexPath.row]];
     

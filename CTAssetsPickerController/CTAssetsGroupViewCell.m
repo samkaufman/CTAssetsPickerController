@@ -34,6 +34,10 @@
     NSString *_accessibilityLabel;
 }
 
+- (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier {
+    return [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+}
+
 - (void)bind:(ALAssetsGroup *)assetsGroup
 {
     CGImageRef posterImage      = assetsGroup.posterImage;

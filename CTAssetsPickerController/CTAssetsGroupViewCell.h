@@ -32,6 +32,7 @@
 
 @interface CTAssetsGroupViewCell : UITableViewCell
 
+- (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier;
 - (void)bind:(ALAssetsGroup *)assetsGroup;
 
 @end
